@@ -1,10 +1,6 @@
-// api/analyze.js - Vercel Serverless Function
-// This file should be placed in /api/analyze.js in your project
+// api/analyze.js - Updated with better error handling and CORS proxy
 
-const https = require('https');
-const http = require('http');
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -25,40 +21,61 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch website HTML
+    console.log('Analyzing URL:', url);
+    
+    // Fetch website HTML using a more reliable method
     const html = await fetchWebsite(url);
+    
+    if (!html || html.length < 100) {
+      throw new Error('Failed to fetch website content');
+    }
+    
+    console.log('HTML fetched successfully, length:', html.length);
     
     // Perform real analysis
     const analysis = analyzeWebsite(html, url);
     
     return res.status(200).json(analysis);
   } catch (error) {
-    console.error('Analysis error:', error);
-    return res.status(500).json({ error: 'Failed to analyze website' });
+    console.error('Analysis error:', error.message);
+    return res.status(500).json({ 
+      error: 'Failed to analyze website',
+      details: error.message 
+    });
   }
-};
+}
 
-// Fetch website content
-function fetchWebsite(url) {
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? https : http;
-    
-    protocol.get(url, {
+// Fetch website content with better error handling
+async function fetchWebsite(url) {
+  try {
+    // Ensure URL has protocol
+    let fullUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      fullUrl = 'https://' + url;
+    }
+
+    console.log('Fetching:', fullUrl);
+
+    // Use fetch API (works in Vercel Edge/Node runtime)
+    const response = await fetch(fullUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; WebsiteAnalyzer/1.0)'
-      }
-    }, (response) => {
-      let data = '';
-      
-      response.on('data', chunk => {
-        data += chunk;
-      });
-      
-      response.on('end', () => {
-        resolve(data);
-      });
-    }).on('error', reject);
-  });
+        'User-Agent': 'Mozilla/5.0 (compatible; WebsiteAnalyzer/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+      timeout: 10000,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const html = await response.text();
+    return html;
+  } catch (error) {
+    console.error('Fetch error:', error.message);
+    throw new Error(`Cannot fetch website: ${error.message}`);
+  }
 }
 
 // Main analysis function
@@ -111,6 +128,12 @@ function analyzeUIUX(html) {
       text: 'No H1 heading found - main page title missing affects visual hierarchy'
     });
     score -= 15;
+  } else if (h1Count > 1) {
+    issues.push({
+      severity: 'medium',
+      text: `Multiple H1 headings detected (${h1Count}) - should have exactly one for clear hierarchy`
+    });
+    score -= 10;
   }
 
   // Check for navigation
@@ -126,9 +149,9 @@ function analyzeUIUX(html) {
   // Check for forms without labels
   const forms = html.match(/<form[^>]*>[\s\S]*?<\/form>/gi) || [];
   forms.forEach((form, idx) => {
-    const inputs = form.match(/<input[^>]*>/gi) || [];
+    const inputs = form.match(/<input[^>]*type="(?!hidden)[^"]*"[^>]*>/gi) || [];
     const labels = form.match(/<label[^>]*>/gi) || [];
-    if (inputs.length > labels.length) {
+    if (inputs.length > labels.length && inputs.length > 0) {
       issues.push({
         severity: 'medium',
         text: `Form #${idx + 1} has ${inputs.length - labels.length} input(s) without associated labels`
@@ -136,6 +159,13 @@ function analyzeUIUX(html) {
       score -= 8;
     }
   });
+
+  if (issues.length === 0) {
+    issues.push({
+      severity: 'low',
+      text: 'Overall UI structure looks good - consider fine-tuning spacing and visual hierarchy'
+    });
+  }
 
   recommendations.push('Ensure primary CTAs use contrasting colors and adequate size (min 44x44px)');
   recommendations.push('Maintain consistent spacing using 8px grid system');
@@ -149,7 +179,7 @@ function analyzeUIUX(html) {
   ];
 
   return {
-    score: Math.max(0, score),
+    score: Math.max(0, Math.min(100, score)),
     summary: totalButtons > 15 
       ? "Your interface has many interactive elements. Simplifying choices and grouping related actions can help users navigate more intuitively and reduce decision fatigue."
       : "Your design structure shows good organization! Fine-tuning spacing and visual hierarchy will help guide users naturally through the content.",
@@ -172,9 +202,13 @@ function analyzeWCAG(html) {
   if (imagesWithoutAlt.length > 0) {
     const examples = imagesWithoutAlt.slice(0, 3).map(img => {
       const srcMatch = img.match(/src=["']([^"']+)["']/);
-      const src = srcMatch ? srcMatch[1].split('/').pop() : 'unknown';
-      return src;
-    });
+      if (srcMatch) {
+        const src = srcMatch[1];
+        const filename = src.split('/').pop().split('?')[0];
+        return filename || 'image';
+      }
+      return 'image';
+    }).filter((v, i, a) => a.indexOf(v) === i); // unique only
     
     issues.push({
       severity: 'high',
@@ -182,7 +216,7 @@ function analyzeWCAG(html) {
     });
     score -= Math.min(30, imagesWithoutAlt.length * 5);
     
-    recommendations.push('Add descriptive alt text to all images, especially: ' + examples.join(', '));
+    recommendations.push(`Add descriptive alt text to all images, especially: ${examples.join(', ')}`);
   }
 
   // Check for aria-labels
@@ -219,15 +253,22 @@ function analyzeWCAG(html) {
   }
 
   // Check for form labels
-  const inputs = (html.match(/<input[^>]*>/gi) || []).length;
+  const inputs = (html.match(/<input[^>]*type="(?!hidden)[^"]*"[^>]*>/gi) || []).length;
   const labels = (html.match(/<label[^>]*>/gi) || []).length;
   
-  if (inputs > labels + 1) {
+  if (inputs > labels + 1 && inputs > 0) {
     issues.push({
       severity: 'medium',
       text: `${inputs - labels} form input(s) appear to be missing associated labels`
     });
     score -= 10;
+  }
+
+  if (issues.length === 0) {
+    issues.push({
+      severity: 'low',
+      text: 'Good accessibility practices detected - consider adding more ARIA labels for enhanced screen reader support'
+    });
   }
 
   recommendations.push('Ensure all interactive elements have proper ARIA labels or visible text');
@@ -243,7 +284,7 @@ function analyzeWCAG(html) {
   ];
 
   return {
-    score: Math.max(0, score),
+    score: Math.max(0, Math.min(100, score)),
     summary: imagesWithoutAlt.length > 5
       ? "Several images are missing descriptions, which means screen reader users won't know what they show. Adding alt text is straightforward and opens your site to millions more visitors."
       : "Your accessibility foundation is decent! A few tweaks to labels and keyboard navigation will make the experience seamless for everyone.",
@@ -261,14 +302,20 @@ function analyzePerformance(html, url) {
 
   // Check HTML size
   const htmlSize = Buffer.byteLength(html, 'utf8');
-  const htmlSizeMB = (htmlSize / 1024 / 1024).toFixed(2);
+  const htmlSizeKB = (htmlSize / 1024).toFixed(2);
 
   if (htmlSize > 500000) {
     issues.push({
       severity: 'high',
-      text: `Large HTML document (${htmlSizeMB}MB) - consider code splitting and lazy loading`
+      text: `Large HTML document (${htmlSizeKB}KB) - consider code splitting and lazy loading`
     });
     score -= 20;
+  } else if (htmlSize > 200000) {
+    issues.push({
+      severity: 'medium',
+      text: `HTML document size is ${htmlSizeKB}KB - room for optimization`
+    });
+    score -= 10;
   }
 
   // Check for inline styles
@@ -314,6 +361,13 @@ function analyzePerformance(html, url) {
     score -= 8;
   }
 
+  if (issues.length === 0) {
+    issues.push({
+      severity: 'low',
+      text: 'Performance looks good overall - consider implementing progressive image loading'
+    });
+  }
+
   recommendations.push('Compress and convert images to modern formats (WebP, AVIF)');
   recommendations.push('Add async/defer to non-critical JavaScript files');
   recommendations.push('Implement browser caching headers for static assets');
@@ -329,7 +383,7 @@ function analyzePerformance(html, url) {
   ];
 
   return {
-    score: Math.max(0, score),
+    score: Math.max(0, Math.min(100, score)),
     summary: totalExternal > 20
       ? "Your site loads quite a few external resources. Combining files and deferring non-critical scripts will make everything feel much snappier, especially on slower connections."
       : "Performance looks reasonable! Some quick optimizations to images and scripts could still shave off valuable milliseconds.",
@@ -353,8 +407,9 @@ function analyzeSEO(html) {
       text: 'Missing <title> tag - critical for search engine rankings'
     });
     score -= 20;
+    recommendations.push('Add a unique, descriptive title tag (50-60 characters)');
   } else {
-    const title = titleMatch[1];
+    const title = titleMatch[1].trim();
     if (title.length < 30) {
       issues.push({
         severity: 'medium',
@@ -438,6 +493,13 @@ function analyzeSEO(html) {
     score -= 5;
   }
 
+  if (issues.length === 0) {
+    issues.push({
+      severity: 'low',
+      text: 'SEO fundamentals are in place - consider adding structured data for enhanced search appearance'
+    });
+  }
+
   recommendations.push('Ensure each page has unique, descriptive title and meta description');
   recommendations.push('Create proper heading hierarchy (single H1, then H2, H3, etc.)');
   recommendations.push('Implement Schema.org structured data for better search appearance');
@@ -452,7 +514,7 @@ function analyzeSEO(html) {
   ];
 
   return {
-    score: Math.max(0, score),
+    score: Math.max(0, Math.min(100, score)),
     summary: !metaDescMatch
       ? "Search engines need help understanding your content. Adding proper titles and descriptions tells them exactly what each page is about, helping the right people discover you."
       : "Your SEO basics are in place! Adding structured data and fine-tuning your content structure will give you an extra edge in search results.",
