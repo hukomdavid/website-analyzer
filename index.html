@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Analyzer - Real Analysis Tool</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Lucide Icons as SVG components
+    const Search = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+    );
+
+    const Zap = () => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+      </svg>
+    );
+
+    const Eye = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    );
+
+    const CheckCircle = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    );
+
+    const Gauge = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="m12 14 4-4"></path>
+        <path d="M3.34 19a10 10 0 1 1 17.32 0"></path>
+      </svg>
+    );
+
+    const AlertCircle = () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    );
+
+    const XCircle = () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+    );
+
+    const Download = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    );
+
+    const FileText = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+    );
+
+    function WebsiteAnalyzer() {
+      const [url, setUrl] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [results, setResults] = useState(null);
+      const [error, setError] = useState('');
+      const [analysisStage, setAnalysisStage] = useState('');
+
+      const analyzeWebsite = async () => {
+        if (!url) {
+          setError('Please enter a URL');
+          return;
+        }
+
+        let testUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          testUrl = 'https://' + url;
+        }
+
+        try {
+          new URL(testUrl);
+        } catch (e) {
+          setError('Please enter a valid URL');
+          return;
+        }
+
+        setError('');
+        setLoading(true);
+        setResults(null);
+        setAnalysisStage('Fetching website...');
+
+        try {
+          // Call backend API
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: testUrl })
+          });
+
+          if (!response.ok) {
+            throw new Error('Analysis failed');
+          }
+
+          const data = await response.json();
+          setResults(data);
+          setLoading(false);
+          setAnalysisStage('');
+
+        } catch (err) {
+          setError('Failed to analyze website. Please check the URL and try again.');
+          setLoading(false);
+          setAnalysisStage('');
+        }
+      };
+
+      const downloadPDF = () => {
+        if (!results) return;
+
+        let pdfContent = `
+WEBSITE ANALYSIS REPORT
+${'='.repeat(60)}
+
+Website: ${results.url}
+Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Overall Score: ${results.overallScore}/100
+
+${'='.repeat(60)}
+
+CATEGORY SCORES
+${'-'.repeat(60)}
+• UI/UX Design: ${results.categories.uiux.score}/100
+• WCAG Accessibility: ${results.categories.wcag.score}/100
+• Performance: ${results.categories.performance.score}/100
+• SEO Basics: ${results.categories.seo.score}/100
+
+${'='.repeat(60)}
+`;
+
+        const categoryTitles = {
+          uiux: 'UI/UX DESIGN ANALYSIS',
+          wcag: 'WCAG ACCESSIBILITY ANALYSIS',
+          performance: 'PERFORMANCE ANALYSIS',
+          seo: 'SEO ANALYSIS'
+        };
+
+        Object.entries(results.categories).forEach(([key, data]) => {
+          pdfContent += `
+
+${categoryTitles[key]}
+${'='.repeat(60)}
+
+SUMMARY
+${'-'.repeat(60)}
+${data.summary}
+
+ISSUES FOUND
+${'-'.repeat(60)}
+${data.issues.map((issue, idx) => `${idx + 1}. [${issue.severity.toUpperCase()}] ${issue.text}`).join('\n')}
+
+RECOMMENDATIONS
+${'-'.repeat(60)}
+${data.recommendations.map((rec, idx) => `${idx + 1}. ${rec}`).join('\n')}
+
+ACTION CHECKLIST
+${'-'.repeat(60)}
+${data.checklist.map((item, idx) => `☐ ${item}`).join('\n')}
+
+`;
+        });
+
+        pdfContent += `
+${'='.repeat(60)}
+End of Report
+Generated by Website Analyzer
+${'='.repeat(60)}
+`;
+
+        const blob = new Blob([pdfContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `website-analysis-${new Date().getTime()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      };
+
+      const getScoreColor = (score) => {
+        if (score >= 90) return 'text-emerald-400';
+        if (score >= 75) return 'text-green-400';
+        if (score >= 60) return 'text-yellow-400';
+        if (score >= 40) return 'text-orange-400';
+        return 'text-red-400';
+      };
+
+      const getScoreBg = (score) => {
+        if (score >= 90) return 'bg-emerald-500/20 border-emerald-500/30';
+        if (score >= 75) return 'bg-green-500/20 border-green-500/30';
+        if (score >= 60) return 'bg-yellow-500/20 border-yellow-500/30';
+        if (score >= 40) return 'bg-orange-500/20 border-orange-500/30';
+        return 'bg-red-500/20 border-red-500/30';
+      };
+
+      const getSeverityColor = (severity) => {
+        if (severity === 'high') return 'text-red-400';
+        if (severity === 'medium') return 'text-yellow-400';
+        return 'text-blue-400';
+      };
+
+      const getSeverityIcon = (severity) => {
+        if (severity === 'high') return <XCircle />;
+        if (severity === 'medium') return <AlertCircle />;
+        return <AlertCircle />;
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12 pt-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="text-blue-500"><Zap /></div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                  Website Analyzer
+                </h1>
+              </div>
+              <p className="text-slate-400 text-lg">
+                Real-time analysis of UI/UX, Accessibility, Performance & SEO
+              </p>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 mb-8">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && analyzeWebsite()}
+                    placeholder="Enter website URL (e.g., example.com)"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-6 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                </div>
+                <button
+                  onClick={analyzeWebsite}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Search />
+                      Analyze
+                    </>
+                  )}
+                </button>
+              </div>
+              {error && <p className="text-red-400 mt-3 text-sm">{error}</p>}
+              {analysisStage && <p className="text-blue-400 mt-3 text-sm">{analysisStage}</p>}
+            </div>
+
+            {results && (
+              <div className="space-y-6">
+                <div className={`rounded-2xl border p-8 ${getScoreBg(results.overallScore)}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-2xl font-bold mb-2">Overall Score</h2>
+                      <p className="text-slate-400">Analysis for {results.url}</p>
+                    </div>
+                    <div className={`text-6xl font-bold ${getScoreColor(results.overallScore)}`}>
+                      {results.overallScore}
+                      <span className="text-3xl">/100</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={downloadPDF}
+                    className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download />
+                    Download Full Report
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { key: 'uiux', label: 'UI/UX Design', icon: Eye },
+                    { key: 'wcag', label: 'Accessibility', icon: CheckCircle },
+                    { key: 'performance', label: 'Performance', icon: Gauge },
+                    { key: 'seo', label: 'SEO Basics', icon: Search }
+                  ].map(({ key, label, icon: Icon }) => (
+                    <div key={key} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="text-blue-400"><Icon /></div>
+                        <h3 className="font-semibold">{label}</h3>
+                      </div>
+                      <div className={`text-4xl font-bold ${getScoreColor(results.categories[key].score)}`}>
+                        {results.categories[key].score}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {Object.entries(results.categories).map(([key, data]) => (
+                  <div key={key} className="bg-slate-900 border border-slate-800 rounded-xl p-8">
+                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                      <div className="text-blue-400">
+                        {key === 'uiux' && <Eye />}
+                        {key === 'wcag' && <CheckCircle />}
+                        {key === 'performance' && <Gauge />}
+                        {key === 'seo' && <Search />}
+                      </div>
+                      {key === 'uiux' && 'UI/UX Design Analysis'}
+                      {key === 'wcag' && 'WCAG Accessibility'}
+                      {key === 'performance' && 'Performance Analysis'}
+                      {key === 'seo' && 'SEO Analysis'}
+                    </h3>
+
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-blue-500/20 rounded-lg p-2">
+                          <FileText />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-300 mb-2">What This Means</h4>
+                          <p className="text-slate-300 leading-relaxed">{data.summary}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase mb-3">Issues Found</h4>
+                      <div className="space-y-2">
+                        {data.issues.map((issue, idx) => (
+                          <div key={idx} className="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3">
+                            <span className={getSeverityColor(issue.severity)}>
+                              {getSeverityIcon(issue.severity)}
+                            </span>
+                            <div className="flex-1">
+                              <span className={`text-xs font-semibold uppercase ${getSeverityColor(issue.severity)}`}>
+                                {issue.severity}
+                              </span>
+                              <p className="text-slate-300 text-sm mt-1">{issue.text}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase mb-3">Recommendations</h4>
+                      <div className="space-y-2">
+                        {data.recommendations.map((rec, idx) => (
+                          <div key={idx} className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                            <div className="text-emerald-400 mt-0.5 flex-shrink-0"><CheckCircle /></div>
+                            <p className="text-slate-300 text-sm">{rec}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase mb-3">Action Checklist</h4>
+                      <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-4">
+                        <div className="space-y-2">
+                          {data.checklist.map((item, idx) => (
+                            <div key={idx} className="flex items-start gap-3">
+                              <div className="w-4 h-4 border-2 border-slate-500 rounded mt-0.5 flex-shrink-0"></div>
+                              <p className="text-slate-300 text-sm">{item}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!results && !loading && (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <div className="text-slate-600"><Search /></div>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-slate-300">Ready to analyze</h3>
+                <p className="text-slate-500">Enter a website URL above to get started</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<WebsiteAnalyzer />, document.getElementById('root'));
+  </script>
+</body>
+</html>
