@@ -1,180 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Kerja 401 - Dolphin Studio</title>
+    <title>Unit Kerja 401 - Professional Auditor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-        .chart-container { position: relative; height: 140px; width: 140px; margin: 0 auto; }
-        .audit-card:hover { border-color: rgba(59, 130, 246, 0.5); transform: translateY(-2px); transition: all 0.3s; }
+        :root { --bg: #020617; --card: #0f172a; --text: #f8fafc; }
+        [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --text: #020617; }
+        body { background: var(--bg); color: var(--text); transition: all 0.3s; font-family: sans-serif; }
+        .glass { background: var(--card); border: 1px solid rgba(128,128,128,0.1); }
+        .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
-                <h1 class="text-xl font-extrabold tracking-tighter text-white">UNIT KERJA 401</h1>
-            </div>
-            <div class="px-4 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-[10px] text-blue-400 font-bold uppercase tracking-widest">
-                Dolphin Studio AI v1.2
-            </div>
+            <h1 class="text-xl font-black text-blue-600">UNIT KERJA 401</h1>
+            <button onclick="toggleTheme()" class="px-4 py-2 glass rounded-xl text-xs font-bold">🌓 Toggle Theme</button>
         </div>
 
-        <div class="glass p-10 rounded-[40px] mb-10 shadow-2xl shadow-blue-900/10 text-center">
-            <h2 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Analyze Digital Identity</h2>
-            <p class="text-slate-500 mb-8 text-sm">Powered by Gemini 3 Preview & Dolphin Engine</p>
+        <div class="glass p-10 rounded-[32px] text-center mb-10">
+            <h2 class="text-3xl font-bold mb-4">Professional Website Audit</h2>
             <div class="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
-                <input type="text" id="urlInput" placeholder="https://uk401.com" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all">
-                <button onclick="runAudit()" id="btnAction" class="bg-blue-600 hover:bg-blue-500 px-10 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20">Run Audit</button>
+                <input type="text" id="urlInput" placeholder="Enter URL..." class="flex-1 p-4 rounded-2xl bg-black/5 border border-slate-700 outline-none">
+                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold">Analyze Now</button>
             </div>
         </div>
 
-        <div id="loading" class="hidden text-center py-20">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 mb-4"></div>
-            <p class="text-slate-400 font-medium">Dolphin AI is being brutally honest about your site...</p>
-        </div>
+        <div id="loading" class="hidden text-center py-20 animate-pulse">Scanning with Dolphin Expert Engine...</div>
 
-        <div id="results" class="hidden space-y-8">
-            <div class="glass p-8 rounded-[32px] border-l-4 border-l-red-500">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold text-white">The Harsh Reality</h3>
-                    <button onclick="downloadPDF()" class="text-xs bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-all border border-white/10">Export PDF</button>
-                </div>
-                <p id="narrativeText" class="text-slate-400 leading-relaxed italic"></p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="glass p-6 rounded-[32px] audit-card">
-                    <div class="chart-container"><canvas id="uiuxChart"></canvas></div>
-                    <h4 class="font-bold mt-4 text-sm text-center">UI/UX & WCAG</h4>
-                    <p id="uiuxDesc" class="text-[11px] text-slate-500 mt-3 leading-tight"></p>
-                </div>
-                <div class="glass p-6 rounded-[32px] audit-card">
-                    <div class="chart-container"><canvas id="seoChart"></canvas></div>
-                    <h4 class="font-bold mt-4 text-sm text-center">SEO Check</h4>
-                    <p id="seoDesc" class="text-[11px] text-slate-500 mt-3 leading-tight"></p>
-                </div>
-                <div class="glass p-6 rounded-[32px] audit-card">
-                    <div class="chart-container"><canvas id="geoChart"></canvas></div>
-                    <h4 class="font-bold mt-4 text-sm text-center">Performance</h4>
-                    <p id="geoDesc" class="text-[11px] text-slate-500 mt-3 leading-tight"></p>
-                </div>
-                <div class="glass p-6 rounded-[32px] audit-card">
-                    <div class="chart-container"><canvas id="securityChart"></canvas></div>
-                    <h4 class="font-bold mt-4 text-sm text-center">Security</h4>
-                    <p id="securityDesc" class="text-[11px] text-slate-500 mt-3 leading-tight"></p>
-                </div>
-            </div>
-
+        <div id="results" class="hidden space-y-10">
             <div class="glass p-8 rounded-[32px]">
-                <h3 class="text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest">Tech Stack Detected</h3>
-                <div id="techList" class="flex flex-wrap gap-2"></div>
+                <h3 class="text-blue-500 font-bold mb-2 uppercase text-xs tracking-widest">Executive Summary</h3>
+                <p id="summaryText" class="text-lg leading-relaxed"></p>
             </div>
-        </div>
 
-        <div class="mt-20 border-t border-slate-900 pt-10 pb-20">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div>
-                    <h4 class="text-blue-500 font-bold text-xs uppercase tracking-[0.2em] mb-4">Changelog v1.2.0</h4>
-                    <ul class="text-[11px] text-slate-600 space-y-2">
-                        <li>• Rebranded to Dolphin Studio</li>
-                        <li>• Multi-color Charts Integration</li>
-                        <li>• Savage AI Logic Enabled</li>
-                        <li>• WordPress Detection Optimized</li>
-                    </ul>
+            <div id="auditGrid" class="grid grid-cols-1 gap-8">
                 </div>
-                <div class="md:text-right">
-                    <p class="text-xs text-slate-700">Developed by</p>
-                    <p class="text-lg font-black text-blue-600">DOLPHIN STUDIO</p>
-                    <p class="text-[10px] text-slate-800 mt-2">© 2024 Unit Kerja 401. All rights reserved.</p>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        let charts = {};
-        function createChart(id, score, color) {
-            const ctx = document.getElementById(id).getContext('2d');
-            if(charts[id]) charts[id].destroy();
-            charts[id] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [score, 100-score],
-                        backgroundColor: [color, '#0f172a'],
-                        borderWidth: 0,
-                        borderRadius: 10
-                    }]
-                },
-                options: { cutout: '80%', plugins: { tooltip: { enabled: false } } }
-            });
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         }
 
         async function runAudit() {
             const url = document.getElementById('urlInput').value;
             if(!url) return;
-            
             document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('results').classList.add('hidden');
-
+            
             try {
                 const res = await fetch('/api/analyze', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ url })
                 });
                 const data = await res.json();
-
-                document.getElementById('narrativeText').innerText = data.summary;
-                document.getElementById('uiuxDesc').innerText = data.categories.uiux.analysis;
-                document.getElementById('seoDesc').innerText = data.categories.seo.analysis;
-                document.getElementById('geoDesc').innerText = data.categories.geo.analysis;
-                document.getElementById('securityDesc').innerText = data.categories.security.analysis;
-
-                createChart('uiuxChart', data.categories.uiux.score, '#3b82f6');
-                createChart('seoChart', data.categories.seo.score, '#eab308');
-                createChart('geoChart', data.categories.geo.score, '#22c55e');
-                createChart('securityChart', data.categories.security.score, '#ef4444');
-
-                const techList = document.getElementById('techList');
-                techList.innerHTML = '';
-                data.techStack.forEach(t => {
-                    const s = document.createElement('span');
-                    s.className = 'bg-blue-500/5 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-[10px] font-bold';
-                    s.innerText = t;
-                    techList.appendChild(s);
-                });
-
-                document.getElementById('results').classList.remove('hidden');
-            } catch (e) {
-                alert('Dolphin AI error: ' + e.message);
-            } finally {
-                document.getElementById('loading').classList.add('hidden');
-            }
+                renderResults(data);
+            } catch (e) { alert(e.message); }
+            finally { document.getElementById('loading').classList.add('hidden'); }
         }
 
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFillColor(2, 6, 23);
-            doc.rect(0, 0, 210, 297, 'F');
-            doc.setTextColor(59, 130, 246);
-            doc.setFontSize(22);
-            doc.text("DOLPHIN AUDIT REPORT", 20, 30);
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.text("Audit Narrative:", 20, 50);
-            doc.setFontSize(12);
-            doc.text(document.getElementById('narrativeText').innerText, 20, 60, { maxWidth: 170 });
-            doc.save("Dolphin-Audit.pdf");
+        function renderResults(data) {
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('summaryText').innerText = data.executiveSummary;
+            
+            const grid = document.getElementById('auditGrid');
+            grid.innerHTML = '';
+
+            Object.keys(data.audits).forEach(key => {
+                const item = data.audits[key];
+                const card = `
+                <div class="glass p-8 rounded-[32px]">
+                    <div class="flex flex-col md:flex-row justify-between mb-6 border-b border-white/5 pb-4">
+                        <h4 class="text-xl font-bold uppercase">${key} Score: ${item.score}%</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="p-4 bg-green-500/5 rounded-2xl border border-green-500/10">
+                            <h5 class="text-green-500 font-bold text-xs mb-3">🟢 PASSED</h5>
+                            <ul class="text-sm space-y-2">${item.pass.map(p => `<li>• ${p}</li>`).join('')}</ul>
+                        </div>
+                        <div class="p-4 bg-yellow-500/5 rounded-2xl border border-yellow-500/10">
+                            <h5 class="text-yellow-500 font-bold text-xs mb-3">🟡 OPTIMIZE</h5>
+                            <ul class="text-sm space-y-3">${item.optimize.map(o => `<li><strong>${o.issue}:</strong> <span class="opacity-70">${o.solution}</span></li>`).join('')}</ul>
+                        </div>
+                        <div class="p-4 bg-red-500/5 rounded-2xl border border-red-500/10">
+                            <h5 class="text-red-500 font-bold text-xs mb-3">🔴 CRITICAL</h5>
+                            <ul class="text-sm space-y-3">${item.fail.map(f => `<li><strong>${f.issue}:</strong> <span class="opacity-70">${f.solution}</span></li>`).join('')}</ul>
+                        </div>
+                    </div>
+                </div>`;
+                grid.innerHTML += card;
+            });
         }
     </script>
 </body>
