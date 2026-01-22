@@ -1,4 +1,6 @@
 {
+  "name": "website-analyzer",
+  "version": "1.2.0",
   "type": "module",
   "dependencies": {
     "@google/generative-ai": "0.21.0",
