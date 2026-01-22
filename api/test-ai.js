@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     // Memaksa penggunaan API v1 dan model Flash terbaru (Gratis)
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash-latest" 
+        model: "gemini-1.5-flash" 
     }, { apiVersion: 'v1' });
 
     const result = await model.generateContent("Halo, apakah kamu sudah online?");
