@@ -7,45 +7,37 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { url } = req.body;
-  if (!url) return res.status(400).json({ error: "URL wajib diisi" });
-
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   try {
-    // Menggunakan Gemini 3 Flash Preview (Sesuai eksperimen sukses Anda)
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     
-    const prompt = `Bertindaklah sebagai Senior Web Auditor yang sangat kejam, jujur, dan sarkas. 
-    Analisa website ini: ${url}. 
-    Berikan kritik yang menusuk, jangan basa-basi. Cari jejak CMS WordPress/Shopify/dll.
-    
-    Respon WAJIB JSON murni (Singkat & Padat):
+    const prompt = `Bertindaklah sebagai Senior Auditor dari Dolphin Studio. 
+    Analisa website ini secara mendalam: ${url}. 
+    Gunakan standar berikut:
+    - UI/UX: Berdasarkan UX Laws (Hick's Law, Fitts's Law).
+    - Accessibility: Berdasarkan WCAG 2.1 Compliance.
+    - SEO: Berdasarkan E-E-A-T & Google Search Essentials.
+    - Performance: Berdasarkan Core Web Vitals.
+    - Security: Berdasarkan OWASP Top 10.
+
+    Berikan respon JSON murni dengan detail teknis:
     {
-      "overallScore": 45,
-      "summary": "1 kalimat kritik pedas yang merangkum kehancuran web ini.",
-      "techStack": ["WordPress", "Detected Tech"],
-      "categories": {
+      "overallScore": 0,
+      "executiveSummary": "Narasi expert yang mendalam.",
+      "techStack": [],
+      "audits": {
         "uiux": {
-          "score": 50,
-          "analysis": "Kritik WCAG & visual dalam 2 poin singkat dan kasar."
+          "score": 0,
+          "pass": ["poin yang sudah bagus"],
+          "optimize": [{"issue": "masalah", "solution": "cara optimasi"}],
+          "fail": [{"issue": "kesalahan fatal", "solution": "cara perbaikan"}]
         },
-        "seo": {
-          "score": 30,
-          "analysis": "Sebutkan 2 dosa besar SEO web ini secara to-the-point."
-        },
-        "geo": {
-          "score": 60,
-          "analysis": "Komentar pedas soal kecepatan/lokasi server."
-        },
-        "security": {
-          "score": 40,
-          "analysis": "Kritik soal SSL/Header keamanan."
-        }
-      },
-      "recommendations": [
-        "Saran perbaikan 1 (singkat)",
-        "Saran perbaikan 2 (singkat)"
-      ]
+        "wcag": { "score": 0, "pass": [], "optimize": [], "fail": [] },
+        "seo": { "score": 0, "pass": [], "optimize": [], "fail": [] },
+        "performance": { "score": 0, "pass": [], "optimize": [], "fail": [] },
+        "security": { "score": 0, "pass": [], "optimize": [], "fail": [] }
+      }
     }`;
 
     const result = await model.generateContent(prompt);
@@ -55,6 +47,6 @@ export default async function handler(req, res) {
     
     return res.status(200).json(JSON.parse(jsonMatch[0]));
   } catch (error) {
-    return res.status(500).json({ error: "AI Error", message: error.message });
+    return res.status(500).json({ error: "Audit Failed", message: error.message });
   }
 }
