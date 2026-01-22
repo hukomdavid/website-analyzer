@@ -1,163 +1,196 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unit Kerja 401 - Ultimate Auditor</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; }
-    .glass { backdrop-filter: blur(12px); background: rgba(15, 23, 42, 0.8); }
-    .progress-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-100">
-  <div id="root"></div>
+const { useState } = React;
 
-  <script type="text/babel">
-    const { useState } = React;
+const WebsiteAnalyzer = () => {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState('');
+  const [results, setResults] = useState(null);
+  const [isDark, setIsDark] = useState(true);
 
-    const WebsiteAnalyzer = () => {
-      const [url, setUrl] = useState('');
-      const [loading, setLoading] = useState(false);
-      const [progress, setProgress] = useState(0);
-      const [status, setStatus] = useState('');
-      const [results, setResults] = useState(null);
-      const [isDark, setIsDark] = useState(true);
+  const runAnalysis = async () => {
+    if (!url) return alert("Please enter a URL");
+    setLoading(true);
+    setResults(null);
+    setProgress(0);
 
-      const runAnalysis = async () => {
-        if (!url) return alert("Please enter a URL");
-        setLoading(true);
-        setResults(null);
-        setProgress(0);
+    const stages = [
+      { p: 20, t: "Fetching Website Data..." },
+      { p: 40, t: "Scanning Security Headers..." },
+      { p: 60, t: "Analyzing SEO & GEO Density..." },
+      { p: 80, t: "Gemini AI Brainstorming..." },
+      { p: 95, t: "Finalizing Report..." }
+    ];
 
-        // Gimmick Progress
-        const stages = [
-          { p: 20, t: "Fetching Website Data..." },
-          { p: 40, t: "Scanning Security Headers..." },
-          { p: 60, t: "Analyzing GEO Fact Density..." },
-          { p: 80, t: "Gemini AI Brainstorming..." },
-          { p: 95, t: "Finalizing Report..." }
-        ];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < stages.length) {
+        setProgress(stages[i].p);
+        setStatus(stages[i].t);
+        i++;
+      }
+    }, 800);
 
-        let i = 0;
-        const interval = setInterval(() => {
-          if (i < stages.length) {
-            setProgress(stages[i].p);
-            setStatus(stages[i].t);
-            i++;
-          }
-        }, 800);
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
-        try {
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url })
-          });
-          const data = await response.json();
-          if (data.error) throw new Error(data.error);
+      clearInterval(interval);
+      setProgress(100);
+      setResults(data);
+    } catch (err) {
+      clearInterval(interval);
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          clearInterval(interval);
-          setProgress(100);
-          setResults(data);
-        } catch (err) {
-          clearInterval(interval);
-          alert("Error: " + err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
+  // FUNGSI BARU: GENERATE PDF
+  const generatePDF = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const timestamp = new Date().toLocaleString();
 
-      return (
-        <div className={`min-h-screen p-6 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-10">
-              <h1 className="text-2xl font-black tracking-tighter text-blue-500 uppercase">Unit Kerja 401</h1>
-              <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-full border border-slate-700">{isDark ? '☀️' : '🌙'}</button>
-            </div>
+    // Design PDF
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(59, 130, 246); // Blue 500
+    doc.text("UNIT KERJA 401 - AUDIT REPORT", 20, 30);
 
-            {/* Input Box */}
-            <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-8 rounded-3xl border shadow-2xl mb-8`}>
-              <h2 className="text-xl font-bold mb-4">Analyze Your Digital Identity</h2>
-              <div className="flex flex-col md:flex-row gap-3">
-                <input 
-                  type="text" 
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className={`flex-1 p-4 rounded-xl outline-none border-2 transition ${isDark ? 'bg-slate-950 border-slate-800 focus:border-blue-500' : 'bg-slate-100 border-slate-200'}`}
-                />
-                <button onClick={runAnalysis} disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-xl font-bold text-white disabled:opacity-50">
-                  {loading ? 'Analyzing...' : 'Run Audit'}
-                </button>
-              </div>
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Target URL: ${url}`, 20, 40);
+    doc.text(`Generated at: ${timestamp}`, 20, 45);
 
-              {loading && (
-                <div className="mt-6">
-                  <div className="flex justify-between text-xs font-bold text-blue-400 mb-2">
-                    <span>{status}</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 progress-glow transition-all" style={{width: `${progress}%`}}></div>
-                  </div>
-                </div>
-              )}
-            </div>
+    doc.setLineWidth(0.5);
+    doc.line(20, 50, 190, 50);
 
-            {/* Results Display */}
-            {results && (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(results.categories).map(([key, data]) => (
-                    <div key={key} className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-4 rounded-2xl border text-center`}>
-                      <span className="text-[10px] uppercase font-black text-slate-500">{key}</span>
-                      <p className="text-3xl font-black text-blue-500">{data.score}%</p>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-6 rounded-2xl border`}>
-                   <h3 className="font-bold mb-2">Tech Stack Detected:</h3>
-                   <div className="flex flex-wrap gap-2">
-                      {results.techStack?.map(t => <span key={t} className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full">{t}</span>)}
-                   </div>
-                </div>
-              </div>
-            )}
+    // Skor Keseluruhan
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text("OVERALL SCORE", 20, 65);
+    doc.setFontSize(40);
+    doc.text(`${results.overallScore || 0}`, 20, 85);
 
-            {/* Footer */}
-            <footer className="mt-20 pt-10 border-t border-slate-800 grid md:grid-cols-2 gap-8 text-xs text-slate-500">
-              <div>
-                <h4 className="font-bold text-blue-500 mb-2">CHANGELOG v1.1.0</h4>
-                <ul className="space-y-1">
-                  <li>• GEO & Security Audit System</li>
-                  <li>• Progress Scanning Gimmick</li>
-                  <li>• Professional Dashboard UI</li>
-                </ul>
-              </div>
-              <div>
-                <p><strong>Concept:</strong> <a href="https://linkedin.com/in/davidhukom" className="text-blue-400">David Hukom</a></p>
-                <p><strong>Developed by:</strong> Claude (AI)</p>
-                <p className="mt-4 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
-                  Support development: <a href="https://saweria.co/hukomdavid" className="text-emerald-400 font-bold underline">saweria.co/hukomdavid</a>
-                </p>
-              </div>
-            </footer>
-          </div>
+    // Rincian Kategori
+    doc.setFontSize(12);
+    doc.text("Detailed Analysis:", 20, 105);
+    let yPos = 115;
+    Object.entries(results.categories).forEach(([key, val]) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${key.toUpperCase()}:`, 25, yPos);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${val.score}%`, 80, yPos);
+      yPos += 10;
+    });
+
+    // Tech Stack
+    yPos += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text("TECH STACK DETECTED:", 20, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const tech = results.techStack?.join(", ") || "None detected";
+    doc.text(tech, 20, yPos + 10, { maxWidth: 160 });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Generated by Unit Kerja 401 - Ultimate Auditor (Gemini AI)", 20, 280);
+
+    doc.save(`Audit_Report_${url.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+  };
+
+  return (
+    <div className={`min-h-screen p-6 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-2xl font-black tracking-tighter text-blue-500 uppercase">Unit Kerja 401</h1>
+          <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-full border border-slate-700">{isDark ? '☀️' : '🌙'}</button>
         </div>
-      );
-    };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<WebsiteAnalyzer />);
-  </script>
-</body>
-</html>
+        <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-8 rounded-3xl border shadow-2xl mb-8`}>
+          <h2 className="text-xl font-bold mb-4">Analyze Your Digital Identity</h2>
+          <div className="flex flex-col md:flex-row gap-3">
+            <input 
+              type="text" 
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              className={`flex-1 p-4 rounded-xl outline-none border-2 transition ${isDark ? 'bg-slate-950 border-slate-800 focus:border-blue-500' : 'bg-slate-100 border-slate-200'}`}
+            />
+            <button onClick={runAnalysis} disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-xl font-bold text-white disabled:opacity-50">
+              {loading ? 'Analyzing...' : 'Run Audit'}
+            </button>
+          </div>
+
+          {loading && (
+            <div className="mt-6">
+              <div className="flex justify-between text-xs font-bold text-blue-400 mb-2">
+                <span>{status}</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 progress-glow transition-all" style={{width: `${progress}%`}}></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {results && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(results.categories).map(([key, data]) => (
+                <div key={key} className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-4 rounded-2xl border text-center`}>
+                  <span className="text-[10px] uppercase font-black text-slate-500">{key === 'uiux' ? 'UI / UX' : key}</span>
+                  <p className="text-3xl font-black text-blue-500">{data.score}%</p>
+                </div>
+              ))}
+            </div>
+            
+            <div className={`${isDark ? 'bg-blue-600/10 border-blue-500/20' : 'bg-blue-50 border-blue-200'} p-8 rounded-2xl border text-center`}>
+               <h3 className="text-sm font-bold text-blue-500 uppercase mb-2">Overall Digital Score</h3>
+               <p className="text-6xl font-black text-blue-500">{results.overallScore || 0}</p>
+               <button onClick={generatePDF} className="mt-6 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full text-sm font-bold transition">
+                 📥 Download PDF Report
+               </button>
+            </div>
+
+            <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-6 rounded-2xl border`}>
+               <h3 className="font-bold mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                Detected Technologies
+               </h3>
+               <div className="flex flex-wrap gap-2">
+                  {results.techStack?.map(t => <span key={t} className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/10">{t}</span>)}
+               </div>
+            </div>
+          </div>
+        )}
+
+        <footer className="mt-20 pt-10 border-t border-slate-800 grid md:grid-cols-2 gap-8 text-xs text-slate-500">
+          <div>
+            <h4 className="font-bold text-blue-500 mb-2 uppercase">System Status</h4>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              <span>Gemini 1.5 Flash Connected (v1 API)</span>
+            </div>
+          </div>
+          <div className="text-right">
+             <p>Developed by <span className="text-white font-bold">Claude AI</span> & David Hukom</p>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<WebsiteAnalyzer />);
