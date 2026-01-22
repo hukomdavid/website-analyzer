@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   
   try {
     // Gunakan nama model standar
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const result = await model.generateContent("Tes koneksi AI.");
     const response = await result.response;
