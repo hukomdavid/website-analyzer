@@ -9,35 +9,37 @@ export default async function handler(req, res) {
   
   const { url } = req.body;
   
-  // Pastikan ini mengambil dari Environment Variable Vercel
+  // Inisialisasi dengan API Key dari Vercel
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   try {
-    // Kita gunakan gemini-pro atau gemini-1.5-flash-latest
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // KUNCINYA DI SINI: Kita paksa panggil model tanpa embel-embel versi manual
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      apiVersion: "v1" 
+    });
     
-    const prompt = `Analisa website ini: ${url}. Berikan skor 0-100 untuk UI, SEO, GEO, dan Security. 
-    Respon dalam format JSON murni:
+    const prompt = `Lakukan audit cepat untuk website: ${url}. Berikan skor 0-100 untuk UI, SEO, GEO, dan Security. 
+    Wajib respon dalam JSON murni:
     {
-      "overallScore": 80,
-      "techStack": ["N/A"],
+      "overallScore": 85,
+      "techStack": ["Detected"],
       "categories": {
-        "uiux": {"score": 80},
-        "seo": {"score": 80},
-        "geo": {"score": 80},
-        "security": {"score": 80}
+        "uiux": {"score": 85},
+        "seo": {"score": 85},
+        "geo": {"score": 85},
+        "security": {"score": 85}
       }
     }`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    let text = response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+    const text = response.text().replace(/```json/g, "").replace(/```/g, "").trim();
     
-    // Kirim hasil akhir
     return res.status(200).json(JSON.parse(text));
 
   } catch (error) {
-    // Detail error agar kita tahu rusaknya di mana
-    return res.status(500).json({ error: error.message });
+    // Jika masih error, tampilkan detailnya agar kita bisa bedah lagi
+    return res.status(500).json({ error: "AI Error: " + error.message });
   }
 }
