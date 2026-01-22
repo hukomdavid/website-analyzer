@@ -1,145 +1,62 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Kerja 401 - Expert Digital Auditor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
-        :root { --bg: #020617; --card: #0f172a; --text: #f8fafc; }
-        [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --text: #020617; }
-        body { background: var(--bg); color: var(--text); transition: 0.3s; font-family: 'Inter', sans-serif; }
-        /* Minimalist Rounded Corners */
-        .glass { background: var(--card); border: 1px solid rgba(128,128,128,0.1); border-radius: 16px; }
-        .audit-card { border-radius: 12px; transition: 0.2s; }
-    </style>
-</head>
-<body class="p-6 md:p-12">
-    <div class="max-w-5xl mx-auto">
-        <div class="flex justify-between items-center mb-12">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">401</div>
-                <h1 class="text-lg font-black tracking-tight uppercase">Unit Kerja 401</h1>
-            </div>
-            <button onclick="toggleTheme()" class="p-2 glass text-sm">🌓 Mode</button>
-        </div>
+<script>
+    // Perbaikan fungsi render untuk teks yang lebih humanis & seimbang
+    function renderResults(data) {
+        document.getElementById('results').classList.remove('hidden');
+        
+        // Font Summary lebih pas (text-lg)
+        const summaryBox = document.getElementById('summaryText');
+        summaryBox.className = "text-lg font-medium leading-relaxed text-slate-400 italic";
+        summaryBox.innerText = data.executiveSummary;
+        
+        const grid = document.getElementById('auditGrid');
+        grid.innerHTML = '';
 
-        <div class="mb-12">
-            <h2 class="text-3xl font-extrabold mb-2">Advanced Website Intelligence</h2>
-            <p class="text-slate-500 text-sm italic">"Turning complex digital data into actionable expert insights."</p>
-        </div>
+        const titles = { 
+            uiux: "User Experience (UX Laws)", 
+            wcag: "Accessibility (WCAG 2.1)", 
+            seo: "Search Engine Optimization", 
+            performance: "Core Web Vitals", 
+            security: "Security & Infrastructure" 
+        };
 
-        <div class="glass p-8 mb-12">
-            <div class="flex flex-col md:flex-row gap-3">
-                <input type="text" id="urlInput" placeholder="Analyze website URL..." class="flex-1 p-3 rounded-lg bg-black/10 border border-white/5 outline-none text-sm">
-                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-bold text-sm text-white">Start Audit</button>
-            </div>
-        </div>
-
-        <div id="loading" class="hidden py-10 text-center text-blue-500 font-bold animate-pulse">ANALYZING ENGINE ACTIVE...</div>
-
-        <div id="results" class="hidden space-y-8">
-            <div class="glass p-6 border-l-4 border-blue-600">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xs font-bold text-blue-500 uppercase tracking-widest">Executive Summary</h3>
-                    <button onclick="downloadPDF()" class="text-[10px] border border-blue-500/30 px-3 py-1 rounded hover:bg-blue-500/10">Download PDF</button>
+        Object.keys(data.audits).forEach(key => {
+            const item = data.audits[key];
+            const card = `
+            <div class="glass p-6 audit-card border border-white/5 bg-slate-900/50">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-blue-500">${titles[key] || key}</h4>
+                    <div class="text-2xl font-black">${item.score}%</div>
                 </div>
-                <p id="summaryText" class="text-lg font-medium leading-relaxed"></p>
-            </div>
-            <div id="auditGrid" class="space-y-6"></div>
-        </div>
-
-        <footer class="mt-24 pt-12 border-t border-white/5 pb-12">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-[11px] text-slate-500">
-                <div>
-                    <h4 class="text-white font-bold mb-3 uppercase tracking-widest">Architects</h4>
-                    <p>Concept: <a href="https://www.linkedin.com/in/davidhukom" class="text-blue-500 font-bold">David Hukom</a></p>
-                    <p>Studio: <span class="text-blue-400 font-bold">Dolphin Studio</span></p>
-                </div>
-                <div>
-                    <h4 class="text-white font-bold mb-3 uppercase tracking-widest">Changelog v1.2.1</h4>
-                    <ul class="space-y-1">
-                        <li>• Minimalist UI Refinement</li>
-                        <li>• Font Balance Adjustment</li>
-                        <li>• Fixed PDF Export Bug</li>
-                        <li>• Multilingual Groundwork</li>
-                    </ul>
-                </div>
-                <div class="glass p-4 border-dashed border-slate-800">
-                    <p class="mb-3 italic">Support us to become a sleepless society:</p>
-                    <a href="https://saweria.co/hukomdavid" target="_blank" class="bg-yellow-600 text-white px-4 py-2 rounded font-bold hover:bg-yellow-500 block text-center">Saweria Support</a>
-                </div>
-            </div>
-        </footer>
-    </div>
-
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        }
-
-        async function runAudit() {
-            const url = document.getElementById('urlInput').value;
-            if(!url) return;
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('results').classList.add('hidden');
-
-            try {
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ url })
-                });
-                const data = await res.json();
-                renderResults(data);
-            } catch (e) { alert("Engine Error. Please retry."); }
-            finally { document.getElementById('loading').classList.add('hidden'); }
-        }
-
-        function renderResults(data) {
-            document.getElementById('results').classList.remove('hidden');
-            document.getElementById('summaryText').innerText = data.executiveSummary;
-            const grid = document.getElementById('auditGrid');
-            grid.innerHTML = '';
-            
-            Object.keys(data.audits).forEach(key => {
-                const item = data.audits[key];
-                const card = `
-                <div class="glass p-6 audit-card">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="text-sm font-black uppercase text-blue-500 tracking-widest">${key}</h4>
-                        <div class="text-2xl font-black">${item.score}%</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-3">
+                        <span class="text-[9px] font-black text-green-500 bg-green-500/10 px-2 py-1 rounded">PASSED</span>
+                        <ul class="text-xs space-y-2 opacity-60">${item.pass.map(p => `<li>• ${p}</li>`).join('')}</ul>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                        <div class="opacity-80">
-                            <span class="text-[9px] font-bold text-green-500 block mb-2">PASSED</span>
-                            ${item.pass.map(p => `<p class="mb-1">• ${p}</p>`).join('')}
-                        </div>
-                        <div class="opacity-80 border-l border-white/5 pl-4">
-                            <span class="text-[9px] font-bold text-yellow-500 block mb-2">OPTIMIZE</span>
-                            ${item.optimize.map(o => `<p class="mb-2"><strong>${o.issue}:</strong> ${o.solution}</p>`).join('')}
-                        </div>
-                        <div class="opacity-80 border-l border-white/5 pl-4">
-                            <span class="text-[9px] font-bold text-red-500 block mb-2">CRITICAL</span>
-                            ${item.fail.map(f => `<p class="mb-2"><strong>${f.issue}:</strong> ${f.solution}</p>`).join('')}
-                        </div>
+                    <div class="space-y-3 border-l border-white/5 pl-4">
+                        <span class="text-[9px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">OPTIMIZE</span>
+                        <ul class="text-xs space-y-3">${item.optimize.map(o => `<li><b class="text-yellow-500/80">${o.issue}:</b> <span class="opacity-60">${o.solution}</span></li>`).join('')}</ul>
                     </div>
-                </div>`;
-                grid.innerHTML += card;
-            });
-        }
+                    <div class="space-y-3 border-l border-white/5 pl-4">
+                        <span class="text-[9px] font-black text-red-500 bg-red-500/10 px-2 py-1 rounded">CRITICAL</span>
+                        <ul class="text-xs space-y-3">${item.fail.map(f => `<li><b class="text-red-500/80">${f.issue}:</b> <span class="opacity-60">${f.solution}</span></li>`).join('')}</ul>
+                    </div>
+                </div>
+            </div>`;
+            grid.innerHTML += card;
+        });
+    }
 
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("UK401 - Dolphin Studio Report", 10, 10);
-            doc.text(document.getElementById('summaryText').innerText, 10, 20, { maxWidth: 180 });
-            doc.save("audit-report.pdf");
-        }
-    </script>
-</body>
-</html>
+    // PDF Generator yang lebih kuat
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.text("DOLPHIN STUDIO - AUDIT REPORT", 10, 20);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text("--------------------------------------------------", 10, 25);
+        const splitText = doc.splitTextToSize(document.getElementById('summaryText').innerText, 180);
+        doc.text(splitText, 10, 35);
+        doc.save("Dolphin_Expert_Report.pdf");
+    }
+</script>
