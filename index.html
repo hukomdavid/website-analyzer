@@ -3,79 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Kerja 401 - Dolphin Studio Expert Auditor</title>
+    <title>Unit Kerja 401 - Expert Digital Auditor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
         :root { --bg: #020617; --card: #0f172a; --text: #f8fafc; }
         [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --text: #020617; }
-        body { background: var(--bg); color: var(--text); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass { background: var(--card); border: 1px solid rgba(128,128,128,0.1); backdrop-filter: blur(10px); }
-        .audit-card { transition: all 0.3s ease; }
-        .audit-card:hover { transform: translateY(-5px); border-color: rgba(59, 130, 246, 0.4); }
+        body { background: var(--bg); color: var(--text); transition: 0.3s; font-family: 'Inter', sans-serif; }
+        /* Minimalist Rounded Corners */
+        .glass { background: var(--card); border: 1px solid rgba(128,128,128,0.1); border-radius: 16px; }
+        .audit-card { border-radius: 12px; transition: 0.2s; }
     </style>
 </head>
-<body class="p-4 md:p-10">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-16">
+<body class="p-6 md:p-12">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-12">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-extrabold text-white shadow-lg shadow-blue-600/30">401</div>
-                <div>
-                    <h1 class="text-xl font-black tracking-tighter">UNIT KERJA 401</h1>
-                    <p class="text-[10px] text-blue-500 font-bold tracking-[0.3em] uppercase">Dolphin Studio</p>
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">401</div>
+                <h1 class="text-lg font-black tracking-tight uppercase">Unit Kerja 401</h1>
+            </div>
+            <button onclick="toggleTheme()" class="p-2 glass text-sm">🌓 Mode</button>
+        </div>
+
+        <div class="mb-12">
+            <h2 class="text-3xl font-extrabold mb-2">Advanced Website Intelligence</h2>
+            <p class="text-slate-500 text-sm italic">"Turning complex digital data into actionable expert insights."</p>
+        </div>
+
+        <div class="glass p-8 mb-12">
+            <div class="flex flex-col md:flex-row gap-3">
+                <input type="text" id="urlInput" placeholder="Analyze website URL..." class="flex-1 p-3 rounded-lg bg-black/10 border border-white/5 outline-none text-sm">
+                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-bold text-sm text-white">Start Audit</button>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden py-10 text-center text-blue-500 font-bold animate-pulse">ANALYZING ENGINE ACTIVE...</div>
+
+        <div id="results" class="hidden space-y-8">
+            <div class="glass p-6 border-l-4 border-blue-600">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold text-blue-500 uppercase tracking-widest">Executive Summary</h3>
+                    <button onclick="downloadPDF()" class="text-[10px] border border-blue-500/30 px-3 py-1 rounded hover:bg-blue-500/10">Download PDF</button>
                 </div>
+                <p id="summaryText" class="text-lg font-medium leading-relaxed"></p>
             </div>
-            <button onclick="toggleTheme()" class="p-4 glass rounded-2xl shadow-xl hover:scale-110 transition-transform">🌓</button>
+            <div id="auditGrid" class="space-y-6"></div>
         </div>
 
-        <div class="glass p-12 md:p-20 rounded-[50px] text-center mb-12 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl"></div>
-            <h2 class="text-4xl md:text-6xl font-black mb-6 tracking-tight">Expert Digital Auditor</h2>
-            <p class="text-slate-500 max-w-xl mx-auto mb-12 text-sm md:text-base">Professional-grade website analysis powered by <strong>Gemini 3 Preview</strong>. Get actionable insights based on global web standards.</p>
-            <div class="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
-                <input type="text" id="urlInput" placeholder="Enter website URL..." class="flex-1 p-5 rounded-2xl bg-black/10 border border-white/5 outline-none focus:ring-2 focus:ring-blue-600 transition-all font-medium">
-                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-2xl font-black shadow-xl shadow-blue-600/20 transition-all active:scale-95">ANALYZE</button>
-            </div>
-        </div>
-
-        <div id="loading" class="hidden text-center py-20">
-            <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500 mb-4"></div>
-            <p class="text-blue-500 font-black text-xs tracking-[0.3em]">DOLPHIN ENGINE COMPUTING...</p>
-        </div>
-
-        <div id="results" class="hidden space-y-12">
-            <div class="glass p-10 rounded-[40px] border-l-[12px] border-blue-600 shadow-xl">
-                <h3 class="text-xs font-black text-blue-500 uppercase tracking-widest mb-6">Executive Summary</h3>
-                <p id="summaryText" class="text-xl md:text-2xl font-semibold leading-snug italic opacity-90"></p>
-            </div>
-            <div id="auditGrid" class="space-y-8"></div>
-        </div>
-
-        <footer class="mt-40 pt-20 border-t border-white/5">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
+        <footer class="mt-24 pt-12 border-t border-white/5 pb-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-[11px] text-slate-500">
                 <div>
-                    <h4 class="font-black text-white text-xs uppercase tracking-[0.2em] mb-8">The Architect</h4>
-                    <p class="text-sm mb-4">Product Concept by: <br><span class="text-lg font-bold text-white">David Hukom</span></p>
-                    <a href="https://www.linkedin.com/in/davidhukom" target="_blank" class="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400 font-bold text-sm transition-colors">
-                        <i class="fab fa-linkedin text-xl"></i> LinkedIn Profile
-                    </a>
+                    <h4 class="text-white font-bold mb-3 uppercase tracking-widest">Architects</h4>
+                    <p>Concept: <a href="https://www.linkedin.com/in/davidhukom" class="text-blue-500 font-bold">David Hukom</a></p>
+                    <p>Studio: <span class="text-blue-400 font-bold">Dolphin Studio</span></p>
                 </div>
                 <div>
-                    <h4 class="font-black text-white text-xs uppercase tracking-[0.2em] mb-8">The Studio</h4>
-                    <p class="text-sm mb-2">Developed by: <br><span class="text-lg font-bold text-blue-400">Dolphin Studio</span></p>
-                    <p class="text-xs text-slate-600 leading-relaxed">Specializing in High-Performance Web Architecture and AI Integrations.</p>
+                    <h4 class="text-white font-bold mb-3 uppercase tracking-widest">Changelog v1.2.1</h4>
+                    <ul class="space-y-1">
+                        <li>• Minimalist UI Refinement</li>
+                        <li>• Font Balance Adjustment</li>
+                        <li>• Fixed PDF Export Bug</li>
+                        <li>• Multilingual Groundwork</li>
+                    </ul>
                 </div>
-                <div class="glass p-8 rounded-3xl border-dashed border-slate-800 relative">
-                    <div class="absolute -top-4 -left-4 text-3xl">☕</div>
-                    <p class="text-xs italic text-slate-400 mb-6 leading-relaxed">"If you like these tools, please support us to buy a coffee so we can become a sleepless society."</p>
-                    <a href="https://saweria.co/hukomdavid" target="_blank" class="block text-center bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-2xl font-black text-xs tracking-widest transition-all shadow-lg shadow-yellow-500/10">
-                        SUPPORT ON SAWERIA
-                    </a>
+                <div class="glass p-4 border-dashed border-slate-800">
+                    <p class="mb-3 italic">Support us to become a sleepless society:</p>
+                    <a href="https://saweria.co/hukomdavid" target="_blank" class="bg-yellow-600 text-white px-4 py-2 rounded font-bold hover:bg-yellow-500 block text-center">Saweria Support</a>
                 </div>
-            </div>
-            <div class="mt-24 text-center pb-20">
-                <p class="text-[9px] uppercase tracking-[0.8em] text-slate-700 font-bold">Managed by Dolphin Studio © 2026</p>
             </div>
         </footer>
     </div>
@@ -100,7 +96,7 @@
                 });
                 const data = await res.json();
                 renderResults(data);
-            } catch (e) { alert("Audit Error: " + e.message); }
+            } catch (e) { alert("Engine Error. Please retry."); }
             finally { document.getElementById('loading').classList.add('hidden'); }
         }
 
@@ -109,34 +105,40 @@
             document.getElementById('summaryText').innerText = data.executiveSummary;
             const grid = document.getElementById('auditGrid');
             grid.innerHTML = '';
-            const titles = { uiux: "User Experience (UX Laws)", wcag: "Accessibility (WCAG 2.1)", seo: "Search Performance", performance: "Core Web Vitals", security: "System Security" };
-
+            
             Object.keys(data.audits).forEach(key => {
                 const item = data.audits[key];
                 const card = `
-                <div class="glass p-10 rounded-[40px] audit-card">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-white/5">
-                        <h4 class="text-xl font-black uppercase text-blue-500 tracking-tighter">${titles[key] || key}</h4>
-                        <div class="text-4xl font-black text-white">${item.score}<span class="text-sm opacity-20 ml-1">%</span></div>
+                <div class="glass p-6 audit-card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-sm font-black uppercase text-blue-500 tracking-widest">${key}</h4>
+                        <div class="text-2xl font-black">${item.score}%</div>
                     </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div class="space-y-4">
-                            <span class="text-[9px] font-black bg-green-500/10 text-green-500 px-4 py-1.5 rounded-full border border-green-500/20">SUCCESS</span>
-                            <ul class="text-xs space-y-2 opacity-60 leading-relaxed font-medium">${item.pass.map(p => `<li>• ${p}</li>`).join('')}</ul>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                        <div class="opacity-80">
+                            <span class="text-[9px] font-bold text-green-500 block mb-2">PASSED</span>
+                            ${item.pass.map(p => `<p class="mb-1">• ${p}</p>`).join('')}
                         </div>
-                        <div class="space-y-4">
-                            <span class="text-[9px] font-black bg-yellow-500/10 text-yellow-500 px-4 py-1.5 rounded-full border border-yellow-500/20">OPTIMIZE</span>
-                            <ul class="text-xs space-y-5">${item.optimize.map(o => `<li><div class="font-bold text-yellow-500 mb-1">${o.issue}</div><div class="opacity-50">${o.solution}</div></li>`).join('')}</ul>
+                        <div class="opacity-80 border-l border-white/5 pl-4">
+                            <span class="text-[9px] font-bold text-yellow-500 block mb-2">OPTIMIZE</span>
+                            ${item.optimize.map(o => `<p class="mb-2"><strong>${o.issue}:</strong> ${o.solution}</p>`).join('')}
                         </div>
-                        <div class="space-y-4">
-                            <span class="text-[9px] font-black bg-red-500/10 text-red-500 px-4 py-1.5 rounded-full border border-red-500/20">CRITICAL</span>
-                            <ul class="text-xs space-y-5">${item.fail.map(f => `<li><div class="font-bold text-red-500 mb-1">${f.issue}</div><div class="opacity-50">${f.solution}</div></li>`).join('')}</ul>
+                        <div class="opacity-80 border-l border-white/5 pl-4">
+                            <span class="text-[9px] font-bold text-red-500 block mb-2">CRITICAL</span>
+                            ${item.fail.map(f => `<p class="mb-2"><strong>${f.issue}:</strong> ${f.solution}</p>`).join('')}
                         </div>
                     </div>
                 </div>`;
                 grid.innerHTML += card;
             });
-            window.scrollTo({ top: document.getElementById('results').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("UK401 - Dolphin Studio Report", 10, 10);
+            doc.text(document.getElementById('summaryText').innerText, 10, 20, { maxWidth: 180 });
+            doc.save("audit-report.pdf");
         }
     </script>
 </body>
