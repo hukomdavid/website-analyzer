@@ -12,27 +12,18 @@ export default async function handler(req, res) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     
-    const prompt = `Bertindaklah sebagai Senior Auditor dari Dolphin Studio. 
-    Analisa website ini secara mendalam: ${url}. 
-    Gunakan standar berikut:
-    - UI/UX: Berdasarkan UX Laws (Hick's Law, Fitts's Law).
-    - Accessibility: Berdasarkan WCAG 2.1 Compliance.
-    - SEO: Berdasarkan E-E-A-T & Google Search Essentials.
-    - Performance: Berdasarkan Core Web Vitals.
-    - Security: Berdasarkan OWASP Top 10.
+    const prompt = `Act as a Senior Digital Auditor from Dolphin Studio. 
+    Critically analyze: ${url}. 
+    Use English for all responses. 
+    Frameworks: UX Laws (Jakob's, Fitts's, Miller's), WCAG 2.1, Core Web Vitals, and OWASP.
 
-    Berikan respon JSON murni dengan detail teknis:
+    Return pure JSON:
     {
       "overallScore": 0,
-      "executiveSummary": "Narasi expert yang mendalam.",
+      "executiveSummary": "A concise, expert-level analysis.",
       "techStack": [],
       "audits": {
-        "uiux": {
-          "score": 0,
-          "pass": ["poin yang sudah bagus"],
-          "optimize": [{"issue": "masalah", "solution": "cara optimasi"}],
-          "fail": [{"issue": "kesalahan fatal", "solution": "cara perbaikan"}]
-        },
+        "uiux": { "score": 0, "pass": [], "optimize": [{"issue":"", "solution":""}], "fail": [{"issue":"", "solution":""}] },
         "wcag": { "score": 0, "pass": [], "optimize": [], "fail": [] },
         "seo": { "score": 0, "pass": [], "optimize": [], "fail": [] },
         "performance": { "score": 0, "pass": [], "optimize": [], "fail": [] },
