@@ -113,25 +113,42 @@
             </div>
 
             {/* Results Display */}
-            {results && (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(results.categories).map(([key, data]) => (
-                    <div key={key} className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-4 rounded-2xl border text-center`}>
-                      <span className="text-[10px] uppercase font-black text-slate-500">{key}</span>
-                      <p className="text-3xl font-black text-blue-500">{data.score}%</p>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-6 rounded-2xl border`}>
-                   <h3 className="font-bold mb-2">Tech Stack Detected:</h3>
-                   <div className="flex flex-wrap gap-2">
-                      {results.techStack?.map(t => <span key={t} className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full">{t}</span>)}
-                   </div>
-                </div>
-              </div>
-            )}
+{results && (
+  <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Menggunakan Optional Chaining ?. agar tidak crash jika data belum ada */}
+      {results.categories && Object.entries(results.categories).map(([key, data]) => (
+        <div key={key} className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-4 rounded-2xl border text-center`}>
+          <span className="text-[10px] uppercase font-black text-slate-500">
+            {key === 'uiux' ? 'UI / UX' : key.toUpperCase()}
+          </span>
+          <p className="text-3xl font-black text-blue-500">{data.score || 0}%</p>
+        </div>
+      ))}
+    </div>
+    
+    {/* Menampilkan Skor Keseluruhan */}
+    <div className={`${isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-200'} p-6 rounded-2xl border text-center`}>
+       <h3 className="text-sm font-bold text-blue-500 uppercase mb-1">Overall Audit Score</h3>
+       <p className="text-5xl font-black text-blue-500">{results.overallScore || 0}</p>
+    </div>
+
+    <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-6 rounded-2xl border`}>
+       <h3 className="font-bold mb-4 flex items-center gap-2">
+         <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+         Tech Stack Detected
+       </h3>
+       <div className="flex flex-wrap gap-2">
+          {results.techStack?.map(t => (
+            <span key={t} className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/20">
+              {t}
+            </span>
+          ))}
+       </div>
+    </div>
+  </div>
+)}
+
 
             {/* Footer */}
             <footer className="mt-20 pt-10 border-t border-slate-800 grid md:grid-cols-2 gap-8 text-xs text-slate-500">
@@ -161,3 +178,4 @@
   </script>
 </body>
 </html>
+
