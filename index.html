@@ -568,9 +568,8 @@ ${'='.repeat(60)}
         </div>
       );
     }
-
-    ReactDOM.render(<WebsiteAnalyzer />, document.getElementById('root'));
-  </script>
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<WebsiteAnalyzer />);
+  </script> 
 </body>
-
 </html>
