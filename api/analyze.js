@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     
     const prompt = `Lakukan audit website untuk: ${url}. 
     Berikan respon dalam JSON murni (tanpa teks pembuka/penutup):
@@ -45,4 +45,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
 
